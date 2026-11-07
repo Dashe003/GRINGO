@@ -1,0 +1,16 @@
+/prompt.md
+/.env
+/.env.*
+!/config/.env.example
+/vendor/
+/node_modules/
+*.log
+
+/storage/backups/**
+!/storage/backups/.htaccess
+!/storage/backups/index.html
+
+/storage/uploads/**
+!/storage/uploads/**/
+!/storage/uploads/**/.htaccess
+!/storage/uploads/**/index.html

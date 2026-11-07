@@ -1,0 +1,9 @@
+Options -Indexes
+<FilesMatch "^(\.env|\.git|prompt\.md|README\.md)$">
+  Require all denied
+</FilesMatch>
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^(?:app|config|database)/ - [F,L,NC]
+  RewriteRule ^storage/(?!uploads/(?:clothes|wishlist|profiles|outfits)/) - [F,L,NC]
+</IfModule>

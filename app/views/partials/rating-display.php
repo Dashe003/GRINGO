@@ -1,0 +1,1 @@
+<?php if(!empty($rating)): ?><span class="rating-display" aria-label="Note : <?= (int)$rating ?> sur 5"><?php for($star=1;$star<=5;$star++): ?><span class="<?= $star<=(int)$rating?'is-filled':'' ?>">★</span><?php endfor; ?><small><?= (int)$rating ?>/5</small></span><?php else: ?><span class="rating-display is-unrated">Pas encore noté</span><?php endif; ?>

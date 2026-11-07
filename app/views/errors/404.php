@@ -1,0 +1,1 @@
+<div class="empty-state"><div class="empty-illustration">404</div><h1>Page introuvable</h1><p>Cette page ou cette pièce n’est pas disponible dans votre espace.</p><a class="button primary" href="<?= e(url(current_user() ? 'dashboard' : 'login')) ?>">Retourner à l’accueil <span>→</span></a></div>
