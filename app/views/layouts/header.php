@@ -5,6 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#11110f">
+  <link rel="icon" type="image/svg+xml" href="<?= e(APP_BASE_URL) ?>/public/assets/favicon.svg?v=<?= (int) filemtime(APP_ROOT.'/public/assets/favicon.svg') ?>">
   <title><?= e($title ?? 'GRINGO') ?> · GRINGO</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

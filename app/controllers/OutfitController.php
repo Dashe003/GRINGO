@@ -116,6 +116,45 @@ final class OutfitController extends Controller
         flash('success','La tenue a été archivée.'); redirect('outfits');
     }
 
+    public function deletePermanently(): void
+    {
+        $user = $this->requireAuth();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); return; }
+        verify_csrf();
+
+        $id = (int) ($_POST['id'] ?? 0);
+        $stmt = $this->db->prepare('SELECT cover_path FROM outfits WHERE id=:id AND user_id=:user_id');
+        $stmt->execute(['id' => $id, 'user_id' => $user['id']]);
+        $outfit = $stmt->fetch();
+        if (!$outfit) {
+            flash('error', 'Cette tenue est introuvable.');
+            redirect('outfits');
+        }
+
+        $this->db->beginTransaction();
+        try {
+            $delete = $this->db->prepare('DELETE FROM outfits WHERE id=:id AND user_id=:user_id');
+            $delete->execute(['id' => $id, 'user_id' => $user['id']]);
+            if ($delete->rowCount() !== 1) throw new RuntimeException("La suppression de la tenue a echoue.");
+            $this->db->commit();
+        } catch (Throwable $exception) {
+            if ($this->db->inTransaction()) $this->db->rollBack();
+            throw $exception;
+        }
+
+        $coverPath = str_replace('\\', '/', (string) ($outfit['cover_path'] ?? ''));
+        if (str_starts_with($coverPath, 'storage/uploads/outfits/')) {
+            $stillUsed = $this->db->prepare('SELECT 1 FROM outfits WHERE cover_path=:path LIMIT 1');
+            $stillUsed->execute(['path' => $outfit['cover_path']]);
+            $uploadRoot = realpath(APP_ROOT . '/storage/uploads/outfits');
+            $file = realpath(APP_ROOT . '/' . $coverPath);
+            if (!$stillUsed->fetchColumn() && $uploadRoot && $file && str_starts_with($file, $uploadRoot . DIRECTORY_SEPARATOR) && is_file($file)) @unlink($file);
+        }
+
+        flash('success', 'La tenue a ete supprimee definitivement.');
+        redirect('outfits');
+    }
+
     public function restore(): void
     {
         $user=$this->requireAuth();if($_SERVER['REQUEST_METHOD']!=='POST'){http_response_code(405);return;}verify_csrf();$id=(int)($_POST['id']??0);

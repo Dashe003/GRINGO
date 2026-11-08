@@ -123,6 +123,49 @@ final class ClothingController extends Controller
         redirect('clothes');
     }
 
+    public function deletePermanently(): void
+    {
+        $user = $this->requireAuth();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit; }
+        verify_csrf();
+
+        $id = (int) ($_POST['id'] ?? 0);
+        $stmt = $this->db->prepare('SELECT image_path FROM clothes WHERE id=:id AND user_id=:user_id');
+        $stmt->execute(['id' => $id, 'user_id' => $user['id']]);
+        $clothing = $stmt->fetch();
+        if (!$clothing) {
+            flash('error', 'Cette piece est introuvable.');
+            redirect('clothes');
+        }
+
+        $paths = array_filter([(string) ($clothing['image_path'] ?? '')]);
+        $gallery = $this->db->prepare('SELECT image_path FROM clothing_images WHERE user_id=:user_id AND clothing_id=:id');
+        $gallery->execute(['user_id' => $user['id'], 'id' => $id]);
+        $paths = array_merge($paths, array_column($gallery->fetchAll(), 'image_path'));
+
+        $this->db->beginTransaction();
+        try {
+            $delete = $this->db->prepare('DELETE FROM clothes WHERE id=:id AND user_id=:user_id');
+            $delete->execute(['id' => $id, 'user_id' => $user['id']]);
+            if ($delete->rowCount() !== 1) throw new RuntimeException("La suppression de la piece a echoue.");
+            $this->db->commit();
+        } catch (Throwable $exception) {
+            if ($this->db->inTransaction()) $this->db->rollBack();
+            throw $exception;
+        }
+
+        $uploadRoot = realpath(APP_ROOT . '/storage/uploads/clothes');
+        foreach (array_unique($paths) as $relativePath) {
+            $relativePath = str_replace('\\', '/', (string) $relativePath);
+            if (!str_starts_with($relativePath, 'storage/uploads/clothes/')) continue;
+            $file = realpath(APP_ROOT . '/' . $relativePath);
+            if ($uploadRoot && $file && str_starts_with($file, $uploadRoot . DIRECTORY_SEPARATOR) && is_file($file)) @unlink($file);
+        }
+
+        flash('success', 'La piece et ses photos ont ete supprimees definitivement.');
+        redirect('clothes');
+    }
+
     public function favorite(): void
     {
         $user=$this->requireAuth();if($_SERVER['REQUEST_METHOD']!=='POST'){http_response_code(405);return;}verify_csrf();$id=(int)($_POST['id']??0);
